@@ -1,12 +1,12 @@
+// server/src/middleware/auth.ts
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import type { JwtPayload } from "jsonwebtoken";
+import { pool } from "../db";
 
 export interface AuthRequest extends Request {
   userId?: number;
 }
 
-export function requireAuth(
+export async function requireAuth(
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -18,15 +18,26 @@ export function requireAuth(
 
   const token = header.slice("Bearer ".length);
 
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET is not set");
-  }
-
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
-    req.userId = payload.userId;
+    const result = await pool.query(
+      `SELECT user_id, expires_at FROM sessions WHERE token = $1`,
+      [token]
+    );
+
+    if (!result.rowCount) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const row = result.rows[0] as { user_id: number; expires_at: string };
+
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      return res.status(401).json({ message: "Session expired" });
+    }
+
+    req.userId = row.user_id;
     next();
-  } catch {
-    return res.status(401).json({ message: "Invalid token" });
+  } catch (err) {
+    console.error("Auth middleware error", err);
+    return res.status(500).json({ message: "Auth failed" });
   }
 }

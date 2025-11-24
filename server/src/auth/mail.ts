@@ -1,3 +1,4 @@
+// server/src/auth/mail.ts
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
@@ -14,20 +15,21 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendVerificationEmail(to: string, code: string) {
-  if (!process.env.SMTP_FROM) {
+  const from = process.env.SMTP_FROM;
+  if (!from) {
     throw new Error("SMTP_FROM is not set in .env");
   }
 
-  const url = "#"; // можно потом сделать ссылку вида https://.../verify?code=...
-
   await transporter.sendMail({
-    from: process.env.SMTP_FROM,
+    from,
     to,
     subject: "Verify your email for Car Auction",
-    text: `Your verification code: ${code}\n\nEnter this code in the app to verify your email.\n${url}`,
+    text: `Your verification code: ${code}\n\nEnter this code in the app to verify your email.`,
     html: `
       <p>Your verification code:</p>
-      <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${code}</p>
+      <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">
+        ${code}
+      </p>
       <p>Enter this code in the app to verify your email.</p>
     `,
   });
