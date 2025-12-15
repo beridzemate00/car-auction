@@ -1,3 +1,4 @@
+// client/src/pages/CarListPage.tsx
 import React, { useEffect, useState, useMemo } from "react";
 import { getAuctions } from "../api/auctions";
 import type { AuctionSummary } from "../types";
@@ -56,17 +57,34 @@ const CarListPage: React.FC = () => {
     });
   }, [auctions, search, status]);
 
+  const liveCount = auctions.filter(a => a.status === 'live').length;
+  const upcomingCount = auctions.filter(a => a.status === 'upcoming').length;
+
   return (
     <div className="page">
-      <div className="page-header">
-        <div>
-          <h1>Car auctions</h1>
-          <p className="page-subtitle">
-            Browse live, upcoming and sold auctions. Click a car to see full details.
-          </p>
+      {/* Hero Section */}
+      <div className="hero">
+        <h1>🚗 Find Your Dream Car</h1>
+        <p>
+          Discover incredible deals on premium vehicles. Bid on live auctions or buy now at fixed prices.
+        </p>
+        <div className="stats-row">
+          <div className="stat-item">
+            <div className="stat-value">{liveCount}</div>
+            <div className="stat-label">Live Auctions</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-value">{upcomingCount}</div>
+            <div className="stat-label">Coming Soon</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-value">{auctions.length}</div>
+            <div className="stat-label">Total Vehicles</div>
+          </div>
         </div>
       </div>
 
+      {/* Filters */}
       <CarFilters
         search={search}
         status={status}
@@ -74,18 +92,40 @@ const CarListPage: React.FC = () => {
         onStatusChange={setStatus}
       />
 
-      {loading && <p>Loading auctions...</p>}
-      {error && <p className="error-text">{error}</p>}
-
-      {!loading && !error && filteredAuctions.length === 0 && (
-        <p>No auctions found. Try changing filters.</p>
+      {/* Loading State */}
+      {loading && (
+        <div className="empty-state">
+          <div className="loading-spinner"></div>
+          <p style={{ marginTop: '1rem' }}>Loading auctions...</p>
+        </div>
       )}
 
-      <div className="car-grid">
-        {filteredAuctions.map((auction) => (
-          <CarCard key={auction.id} auction={auction} />
-        ))}
-      </div>
+      {/* Error State */}
+      {error && <p className="error-text">{error}</p>}
+
+      {/* Empty State */}
+      {!loading && !error && filteredAuctions.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-state-icon">🔍</div>
+          <h3>No auctions found</h3>
+          <p>Try adjusting your search or filter criteria.</p>
+          <button
+            className="btn-secondary"
+            onClick={() => { setSearch(""); setStatus("all"); }}
+          >
+            Clear Filters
+          </button>
+        </div>
+      )}
+
+      {/* Car Grid */}
+      {!loading && !error && filteredAuctions.length > 0 && (
+        <div className="car-grid">
+          {filteredAuctions.map((auction) => (
+            <CarCard key={auction.id} auction={auction} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
