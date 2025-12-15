@@ -1,6 +1,6 @@
 // client/src/api/client.ts
 
-const API_BASE_URL = "http://localhost:4001/api";
+const API_BASE_URL = "http://localhost:4000/api";
 
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;

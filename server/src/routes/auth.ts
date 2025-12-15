@@ -373,4 +373,112 @@ router.post("/check-code", async (req, res) => {
   }
 });
 
+// GET /api/auth/me - Get current user from session token
+router.get("/me", async (req, res) => {
+  try {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const token = header.slice("Bearer ".length);
+
+    const sessionRes = await pool.query(
+      `SELECT user_id, expires_at FROM sessions WHERE token = $1`,
+      [token]
+    );
+
+    if (!sessionRes.rowCount) {
+      return res.status(401).json({ message: "Invalid session" });
+    }
+
+    const session = sessionRes.rows[0] as { user_id: number; expires_at: string };
+
+    if (new Date(session.expires_at).getTime() < Date.now()) {
+      // Clean up expired session
+      await pool.query("DELETE FROM sessions WHERE token = $1", [token]);
+      return res.status(401).json({ message: "Session expired" });
+    }
+
+    const userRes = await pool.query<User>(
+      "SELECT id, email, name, is_verified, created_at FROM users WHERE id = $1",
+      [session.user_id]
+    );
+
+    if (!userRes.rowCount) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const user = userRes.rows[0];
+
+    return res.status(200).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isVerified: user.is_verified,
+        createdAt: user.created_at,
+      },
+    });
+  } catch (err) {
+    console.error("GET /api/auth/me error", err);
+    return res.status(500).json({ message: "Failed to get user" });
+  }
+});
+
+// POST /api/auth/logout - Invalidate the current session
+router.post("/logout", async (req, res) => {
+  try {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith("Bearer ")) {
+      return res.status(200).json({ message: "Logged out" });
+    }
+
+    const token = header.slice("Bearer ".length);
+
+    await pool.query("DELETE FROM sessions WHERE token = $1", [token]);
+
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("POST /api/auth/logout error", err);
+    return res.status(500).json({ message: "Logout failed" });
+  }
+});
+
+// DELETE /api/auth/sessions - Clear all sessions for current user (logout everywhere)
+router.delete("/sessions", async (req, res) => {
+  try {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const token = header.slice("Bearer ".length);
+
+    const sessionRes = await pool.query(
+      `SELECT user_id FROM sessions WHERE token = $1`,
+      [token]
+    );
+
+    if (!sessionRes.rowCount) {
+      return res.status(401).json({ message: "Invalid session" });
+    }
+
+    const userId = (sessionRes.rows[0] as { user_id: number }).user_id;
+
+    const deleteRes = await pool.query(
+      "DELETE FROM sessions WHERE user_id = $1",
+      [userId]
+    );
+
+    return res.status(200).json({
+      message: "All sessions cleared",
+      sessionsCleared: deleteRes.rowCount,
+    });
+  } catch (err) {
+    console.error("DELETE /api/auth/sessions error", err);
+    return res.status(500).json({ message: "Failed to clear sessions" });
+  }
+});
+
 export default router;
