@@ -34,7 +34,7 @@ export interface AuthResponse {
   user: User;
 }
 
-export interface watchlist extends AuctionSummary {}
+export interface WatchlistItem extends AuctionSummary { }
 
 export interface UserBid {
   id: number;

@@ -17,3 +17,11 @@ export function verifyEmail(email: string, code: string) {
 export function login(email: string, password: string) {
   return apiPost<AuthResponse>("/auth/login", { email, password });
 }
+
+export function resendCode(email: string) {
+  return apiPost<{ message: string }>("/auth/resend-code", { email });
+}
+
+export function checkCode(email: string, code: string) {
+  return apiPost<{ message: string; valid: boolean }>("/auth/check-code", { email, code });
+}
