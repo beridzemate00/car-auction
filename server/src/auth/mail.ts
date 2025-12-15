@@ -4,17 +4,36 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT ?? 587),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// Check if SMTP is properly configured
+const isSmtpConfigured =
+  process.env.SMTP_HOST &&
+  process.env.SMTP_HOST !== "smtp.example.com" &&
+  process.env.SMTP_USER &&
+  process.env.SMTP_USER !== "your_smtp_login";
+
+const transporter = isSmtpConfigured
+  ? nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  })
+  : null;
 
 export async function sendVerificationEmail(to: string, code: string) {
+  // Development mode - log code to console
+  if (!isSmtpConfigured || !transporter) {
+    console.log("\n" + "=".repeat(50));
+    console.log("📧 DEVELOPMENT MODE - Email not sent");
+    console.log(`📬 To: ${to}`);
+    console.log(`🔐 Verification Code: ${code}`);
+    console.log("=".repeat(50) + "\n");
+    return;
+  }
+
   const from = process.env.SMTP_FROM;
   if (!from) {
     throw new Error("SMTP_FROM is not set in .env");

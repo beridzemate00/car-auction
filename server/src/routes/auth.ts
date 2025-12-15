@@ -9,7 +9,7 @@ import type { User } from "../types";
 
 const router = express.Router();
 
-const VERIFICATION_CODE_TTL_MINUTES = 15;
+const VERIFICATION_CODE_TTL_MINUTES = 60; // increased from 15 to 60 minutes for testing
 const SALT_ROUNDS = 10;
 const SESSION_TTL_DAYS = 7;
 
@@ -251,6 +251,125 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("POST /api/auth/login error", err);
     return res.status(500).json({ message: "Login failed" });
+  }
+});
+
+// POST /api/auth/resend-code - Resend verification code
+router.post("/resend-code", async (req, res) => {
+  try {
+    const { email } = req.body as { email?: string };
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const userRes = await pool.query<User>(
+      "SELECT * FROM users WHERE email = $1",
+      [normalizedEmail]
+    );
+
+    if (!userRes.rowCount) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const user = userRes.rows[0];
+
+    if (user.is_verified) {
+      return res.status(400).json({ message: "Email is already verified" });
+    }
+
+    // Invalidate old codes
+    await pool.query(
+      "UPDATE email_verification_codes SET used = true WHERE user_id = $1 AND used = false",
+      [user.id]
+    );
+
+    // Generate new code
+    const code = generateVerificationCode();
+    const expiresAt = new Date(
+      Date.now() + VERIFICATION_CODE_TTL_MINUTES * 60_000
+    ).toISOString();
+
+    await pool.query(
+      `
+        INSERT INTO email_verification_codes (user_id, code, expires_at)
+        VALUES ($1, $2, $3)
+      `,
+      [user.id, code, expiresAt]
+    );
+
+    await sendVerificationEmail(normalizedEmail, code);
+
+    return res.status(200).json({ message: "Verification code sent to email" });
+  } catch (err) {
+    console.error("POST /api/auth/resend-code error", err);
+    return res.status(500).json({ message: "Failed to resend code" });
+  }
+});
+
+// POST /api/auth/check-code - Check if verification code is valid (without verifying)
+router.post("/check-code", async (req, res) => {
+  try {
+    const { email, code } = req.body as {
+      email?: string;
+      code?: string;
+    };
+
+    if (!email || !code) {
+      return res.status(400).json({ message: "Email and code are required" });
+    }
+
+    // Validate code format (6 digits)
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(400).json({ message: "Code must be 6 digits" });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const userRes = await pool.query<User>(
+      "SELECT * FROM users WHERE email = $1",
+      [normalizedEmail]
+    );
+
+    if (!userRes.rowCount) {
+      return res.status(400).json({ message: "User not found", valid: false });
+    }
+
+    const user = userRes.rows[0];
+
+    const codeRes = await pool.query(
+      `
+        SELECT id, code, expires_at, used
+        FROM email_verification_codes
+        WHERE user_id = $1
+          AND code = $2
+          AND used = false
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [user.id, code]
+    );
+
+    if (!codeRes.rowCount) {
+      return res.status(400).json({ message: "Invalid code", valid: false });
+    }
+
+    const verification = codeRes.rows[0] as {
+      id: number;
+      expires_at: string;
+      used: boolean;
+    };
+
+    if (new Date(verification.expires_at).getTime() < Date.now()) {
+      return res.status(400).json({ message: "Code has expired", valid: false });
+    }
+
+    return res.status(200).json({ message: "Code is valid", valid: true });
+  } catch (err) {
+    console.error("POST /api/auth/check-code error", err);
+    return res.status(500).json({ message: "Failed to check code", valid: false });
   }
 });
 

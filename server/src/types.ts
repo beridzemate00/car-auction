@@ -1,4 +1,6 @@
-// server/src/auth/types.ts
+// server/src/types.ts
+
+export type AuctionStatus = "live" | "upcoming" | "sold";
 
 export interface User {
   id: number;
