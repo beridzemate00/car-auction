@@ -2,6 +2,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ScrollToTop from "./ScrollToTop";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,6 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </p>
         </div>
       </footer>
+      <ScrollToTop />
     </div>
   );
 };

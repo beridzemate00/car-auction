@@ -855,3 +855,298 @@ a:hover {
     gap: 1.5rem;
   }
 }
+
+/* ===== ENHANCED ANIMATIONS & MICRO-INTERACTIONS ===== */
+
+/* Page fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.car-card {
+  animation: fadeInUp 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.car-grid .car-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.car-grid .car-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.car-grid .car-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.car-grid .car-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.car-grid .car-card:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.car-grid .car-card:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+/* Pulse animation for live auctions */
+@keyframes pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+}
+
+.status-live {
+  animation: pulse 2s infinite;
+}
+
+/* Hot Deal Badge */
+.hot-deal-badge {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: white;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  animation: pulse-hot 1.5s infinite;
+}
+
+@keyframes pulse-hot {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Favorite/Watchlist indicator */
+.watchlist-indicator {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.watchlist-indicator:hover {
+  transform: scale(1.1);
+  background: white;
+}
+
+.watchlist-indicator.active {
+  background: var(--error);
+  color: white;
+}
+
+/* Bid count indicator */
+.bid-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--gray-100);
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+}
+
+.bid-count strong {
+  color: var(--text-primary);
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Tooltip styles */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  padding: 0.5rem 0.75rem;
+  background: var(--gray-900);
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* Button ripple effect */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  transform: scale(0);
+  transition: transform 0.5s ease;
+}
+
+.btn:active::after {
+  transform: scale(2);
+  transition: none;
+}
+
+/* Progress bar for auction time */
+.auction-progress {
+  height: 4px;
+  background: var(--gray-200);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.auction-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--warning), var(--error));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Image zoom on hover */
+.car-card-image-wrap::after {
+  content: '🔍 View Details';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.car-card:hover .car-card-image-wrap::after {
+  opacity: 1;
+}
+
+/* Notification badge */
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--error);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Floating action button */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+  transition: all 0.3s ease;
+  z-index: 50;
+}
+
+.fab:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+/* Scroll to top visibility */
+@media (max-width: 640px) {
+  .fab {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+}
